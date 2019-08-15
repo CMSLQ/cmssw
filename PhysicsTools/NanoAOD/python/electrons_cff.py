@@ -106,9 +106,9 @@ _bitmapVIDForEleHEEP_docstring = _get_bitmapVIDForEle_docstring(electron_id_modu
 
 for modifier in run2_miniAOD_80XLegacy, :
     modifier.toModify(bitmapVIDForEle, src = "slimmedElectronsUpdated")
+    modifier.toModify(bitmapVIDForEleHEEP, src = "slimmedElectronsUpdated")
     modifier.toModify(bitmapVIDForEleSpring15, src = "slimmedElectronsUpdated")
     modifier.toModify(bitmapVIDForEleSum16, src = "slimmedElectronsUpdated")
-    modifier.toModify(bitmapVIDForEleHEEP, src = "slimmedElectronsUpdated")
 
 isoForEle = cms.EDProducer("EleIsoValueMapProducer",
     src = cms.InputTag("slimmedElectrons"),
@@ -200,6 +200,7 @@ slimmedElectronsWithUserData = cms.EDProducer("PATElectronUserDataEmbedder",
     ),
     userInts = cms.PSet(
         VIDNestedWPBitmap = cms.InputTag("bitmapVIDForEle"),
+        VIDNestedWPBitmapHEEP = cms.InputTag("bitmapVIDForEleHEEP"),
         seedGain = cms.InputTag("seedGainEle"),
     ),
     userCands = cms.PSet(
@@ -351,6 +352,7 @@ electronTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
         cutBased = Var("userInt('cutbasedID_Fall17_V2_veto')+userInt('cutbasedID_Fall17_V2_loose')+userInt('cutbasedID_Fall17_V2_medium')+userInt('cutbasedID_Fall17_V2_tight')",int,doc="cut-based ID Fall17 V2 (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)"),
         cutBased_Fall17_V1 = Var("userInt('cutbasedID_Fall17_V1_veto')+userInt('cutbasedID_Fall17_V1_loose')+userInt('cutbasedID_Fall17_V1_medium')+userInt('cutbasedID_Fall17_V1_tight')",int,doc="cut-based ID Fall17 V1 (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)"),
         vidNestedWPBitmap = Var("userInt('VIDNestedWPBitmap')",int,doc=_bitmapVIDForEle_docstring),
+        vidNestedWPBitmapHEEP = Var("userInt('VIDNestedWPBitmapHEEP')",int,doc=_bitmapVIDForEleHEEP_docstring),
         cutBased_HEEP = Var("userInt('cutbasedID_HEEP')",bool,doc="cut-based HEEP ID"),
         miniPFRelIso_chg = Var("userFloat('miniIsoChg')/pt",float,doc="mini PF relative isolation, charged component"),
         miniPFRelIso_all = Var("userFloat('miniIsoAll')/pt",float,doc="mini PF relative isolation, total (with scaled rho*EA PU corrections)"),
@@ -421,7 +423,6 @@ run2_nanoAOD_94X2016.toModify(electronTable.variables,
     mvaFall17V1noIso_WPL = Var("electronID('mvaEleID-Fall17-noIso-V1-wpLoose')",bool,doc="MVA Fall17 V1 noIso ID loose WP"),
     vidNestedWPBitmapSpring15 = Var("userInt('VIDNestedWPBitmapSpring15')",int,doc=_bitmapVIDForEleSpring15_docstring),
     vidNestedWPBitmapSum16 = Var("userInt('VIDNestedWPBitmapSum16')",int,doc=_bitmapVIDForEleSum16_docstring),
-    vidNestedWPBitmapHEEP = Var("userInt('VIDNestedWPBitmapHEEP')",int,doc=_bitmapVIDForEleHEEP_docstring),
 )
 run2_miniAOD_80XLegacy.toModify(electronTable.variables,
     cutBased_Sum16 = Var("userInt('cutbasedID_Sum16_veto')+userInt('cutbasedID_Sum16_loose')+userInt('cutbasedID_Sum16_medium')+userInt('cutbasedID_Sum16_tight')",int,doc="cut-based Summer16 ID (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)"),
@@ -460,14 +461,14 @@ electronMCTable = cms.EDProducer("CandMCMatchTableProducer",
     docString = cms.string("MC matching to status==1 electrons or photons"),
 )
 
-electronSequence = cms.Sequence(bitmapVIDForEle + isoForEle + ptRatioRelForEle + seedGainEle + slimmedElectronsWithUserData + finalElectrons)
+electronSequence = cms.Sequence(bitmapVIDForEle + bitmapVIDForEleHEEP + isoForEle + ptRatioRelForEle + seedGainEle + slimmedElectronsWithUserData + finalElectrons)
 electronTables = cms.Sequence (electronMVATTH + electronTable)
 electronMC = cms.Sequence(electronsMCMatchForTable + electronMCTable)
 
 _withUpdate_sequence = cms.Sequence(slimmedElectronsUpdated + electronSequence.copy())
 
 _withUpdateAnd80XLegacyScale_sequence = _withUpdate_sequence.copy()
-_withUpdateAnd80XLegacyScale_sequence.replace(slimmedElectronsWithUserData, calibratedPatElectrons80XLegacy + bitmapVIDForEleSpring15 +bitmapVIDForEleSum16 + bitmapVIDForEleHEEP + slimmedElectronsWithUserData)
+_withUpdateAnd80XLegacyScale_sequence.replace(slimmedElectronsWithUserData, calibratedPatElectrons80XLegacy + bitmapVIDForEleSpring15 +bitmapVIDForEleSum16 + slimmedElectronsWithUserData)
 run2_miniAOD_80XLegacy.toReplaceWith(electronSequence, _withUpdateAnd80XLegacyScale_sequence)
 
 _with94XScale_sequence = electronSequence.copy()
@@ -479,12 +480,6 @@ run2_nanoAOD_94XMiniAODv2.toReplaceWith(electronSequence, _with94XScale_sequence
 #_with_bitmapVIDForEleSpring15AndSum16_sequence.replace(slimmedElectronsWithUserData, bitmapVIDForEleSpring15 + bitmapVIDForEleSum16 + slimmedElectronsWithUserData)
 #run2_nanoAOD_94X2016.toReplaceWith(electronSequence, _with_bitmapVIDForEleSpring15AndSum16_sequence)
 
-<<<<<<< HEAD
 _with102XScale_sequence = electronSequence.copy()
 _with102XScale_sequence.replace(slimmedElectronsWithUserData, calibratedPatElectrons102X + slimmedElectronsWithUserData)
 (~(run2_miniAOD_80XLegacy | run2_nanoAOD_94X2016 | run2_nanoAOD_94XMiniAODv1 | run2_nanoAOD_94XMiniAODv2)).toReplaceWith(electronSequence, _with102XScale_sequence)
-=======
-_with_bitmapVIDForEleSpring15AndSum16AndHEEP_sequence = electronSequence.copy()
-_with_bitmapVIDForEleSpring15AndSum16AndHEEP_sequence.replace(slimmedElectronsWithUserData, bitmapVIDForEleSpring15 + bitmapVIDForEleSum16 + bitmapVIDForEleHEEP + slimmedElectronsWithUserData)
-run2_nanoAOD_94X2016.toReplaceWith(electronSequence, _with_bitmapVIDForEleSpring15AndSum16AndHEEP_sequence)
->>>>>>> add more electron info
